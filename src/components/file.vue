@@ -1,7 +1,7 @@
 <template>
   <div  class="uploader-file">
     <slot>
-      <div class="uploader-file-progress"></div>
+      <div class="uploader-file-progress" :class="progressingClass" :style="progressStyle"></div>
       <div class="uploader-file-info">
         <div class="uploader-file-name"><i class="uploader-file-icon"></i>{{file.name}}</div>
         <div class="uploader-file-size">125k</div>
@@ -21,6 +21,7 @@
 </template>
 
 <script>
+    import events from '../common/file-events'
     const COMPONENT_NAME = 'uploader-file'
     export default {
         name: COMPONENT_NAME,
@@ -36,7 +37,116 @@
             default: false
           }
         },
+        data() {
+          return {
+            progressingClass: '',
+            isComplete: false,
+            isUploading: false,
+            paused: false,
+            error: false,
+          }
+        },
+        watch: {
+          status (newStatus, oldStatus) {
+
+          }
+        },
+        computed: {
+          status () {
+            const isUploading = this.isUploading
+            const isComplete = this.isComplete
+            const isError = this.error
+            const paused = this.paused
+            if (isComplete) {
+              return 'success'
+            } else if (isError) {
+              return 'error'
+            } else if (isUploading) {
+              return 'uploading'
+            } else if (paused) {
+              return 'paused'
+            } else {
+              return 'waiting'
+            }
+          },
+          progressStyle () {
+
+          }
+        },
+        mounted () {
+          const staticProps = ['paused', 'error', 'averageSpeed', 'currentSpeed']
+          staticProps.forEach(prop => {
+            this[prop] = this.file[prop]
+          })
+          const fnProps = [
+            'isComplete',
+            'isUploading',
+            {
+              key: 'size',
+              fn: 'getSize'
+            },
+            {
+              key: 'formatedSize',
+              fn: 'getFormatSize'
+            },
+            {
+              key: 'uploadedSize',
+              fn: 'sizeUploaded'
+            },
+            'progress',
+            'timeRemaining',
+            {
+              key: 'type',
+              fn: 'getType'
+            },
+            {
+              key: 'extension',
+              fn: 'getExtension'
+            }
+          ]
+          fnProps.forEach((fnProp) => {
+            if (typeof fnProp === 'string') {
+              this[fnProp] = this.file[fnProp]()
+            } else {
+              this[fnProp.key] = this.file[fnProp.fn]()
+            }
+          })
+
+          const handlers = this._handlers = {}
+          const eventHandler = (event) => {
+            handlers[event] = (...args) => {
+              this.fileEventsHandler(event, args)
+            }
+            return handlers[event]
+          }
+          events.forEach((event) => {
+            this.file.uploader.on(event, eventHandler(event))
+          })
+        },
         methods: {
+          fileEventsHandler (event, args) {
+            console.log('gsdfileEventsHandler', event, args)
+            const rootFile = args[0]
+            const file = args[1]
+            const target = this.list ? rootFile : file
+            if (this.file === target) {
+              if (this.list && event === 'fileSuccess') {
+                this.processResponse(args[2])
+                return
+              }
+              this[`_${event}`].apply(this, args)
+            }
+          },
+          processResponse (message) {
+          },
+          _fileProgress () {
+          },
+          _fileSuccess (rootFile, file, message) {
+          },
+          _fileComplete () {
+          },
+          _fileError (rootFile, file, message) {
+          },
           pause () {
           },
           resume () {
@@ -45,6 +155,12 @@
           },
           retry () {
           }
+        },
+        destroyed () {
+          events.forEach((event) => {
+            this.file.uploader.off(event, this._handlers[event])
+          })
+          this._handlers = null
         }
     }
 </script>
