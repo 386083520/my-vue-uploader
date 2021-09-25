@@ -7,7 +7,10 @@
         <div class="uploader-file-size">125k</div>
         <div class="uploader-file-meta"></div>
         <div class="uploader-file-status">
-          <span>success</span>
+          <span v-show="status !== 'uploading'">{{statusText}}</span>
+          <span v-show="status === 'uploading'">
+             <span>{{progressStyle.progress}}</span>
+          </span>
         </div>
         <div class="uploader-file-actions">
           <span class="uploader-file-pause" @click="pause"></span>
@@ -44,11 +47,19 @@
             isUploading: false,
             paused: false,
             error: false,
+            progress: 0,
           }
         },
         watch: {
           status (newStatus, oldStatus) {
-
+            if (oldStatus && newStatus === 'uploading' && oldStatus !== 'uploading') {
+              this.tid = setTimeout(() => {
+                this.progressingClass = 'uploader-file-progressing'
+              }, 200)
+            } else {
+              clearTimeout(this.tid)
+              this.progressingClass = ''
+            }
           }
         },
         computed: {
@@ -70,7 +81,26 @@
             }
           },
           progressStyle () {
+            const progress = Math.floor(this.progress * 100)
+            const style = `translateX(${Math.floor(progress - 100)}%)`
+            return {
+              progress: `${progress}%`,
+              webkitTransform: style,
+              mozTransform: style,
+              msTransform: style,
+              transform: style
+            }
+          },
+          statusText () {
+            const status = this.status
+            const fileStatusText = this.file.uploader.fileStatusText
+            let txt = status
+            if (typeof fileStatusText === 'function') {
 
+            } else {
+              txt = fileStatusText[status]
+            }
+            return txt || status
           }
         },
         mounted () {
@@ -137,15 +167,24 @@
               this[`_${event}`].apply(this, args)
             }
           },
+          _actionCheck () {
+            this.isUploading = this.file.isUploading()
+          },
           processResponse (message) {
           },
           _fileProgress () {
+            this.progress = this.file.progress()
           },
           _fileSuccess (rootFile, file, message) {
+            this.error = false
+            this.isComplete = true
+            this.isUploading = false
           },
           _fileComplete () {
+            this._fileSuccess()
           },
           _fileError (rootFile, file, message) {
+            this.isUploading = false
           },
           pause () {
           },
@@ -195,6 +234,9 @@
     height: 100%;
     background: #e2eeff;
     transform: translateX(-100%);
+  }
+  .uploader-file-progressing {
+    transition: all .4s linear;
   }
   .uploader-file-info {
     position: relative;
