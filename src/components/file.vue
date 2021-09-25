@@ -3,8 +3,8 @@
     <slot>
       <div class="uploader-file-progress" :class="progressingClass" :style="progressStyle"></div>
       <div class="uploader-file-info">
-        <div class="uploader-file-name"><i class="uploader-file-icon"></i>{{file.name}}</div>
-        <div class="uploader-file-size">125k</div>
+        <div class="uploader-file-name"><i class="uploader-file-icon" :icon="fileCategory"></i>{{file.name}}</div>
+        <div class="uploader-file-size">{{formatedSize}}</div>
         <div class="uploader-file-meta"></div>
         <div class="uploader-file-status">
           <span v-show="status !== 'uploading'">{{statusText}}</span>
@@ -53,7 +53,9 @@
             error: false,
             progress: 0,
             averageSpeed: 0,
-            timeRemaining: 0
+            timeRemaining: 0,
+            formatedSize: '',
+            extension: ''
           }
         },
         watch: {
@@ -69,6 +71,25 @@
           }
         },
         computed: {
+          fileCategory () {
+            const extension = this.extension
+            const isFolder = this.file.isFolder
+            let type = isFolder ? 'folder' : 'unknown'
+            const categoryMap = this.file.uploader.opts.categoryMap
+            const typeMap = categoryMap || {
+              image: ['gif', 'jpg', 'jpeg', 'png', 'bmp', 'webp'],
+              video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
+              audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac'],
+              document: ['doc', 'txt', 'docx', 'pages', 'epub', 'pdf', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
+            }
+            Object.keys(typeMap).forEach((_type) => {
+              const extensions = typeMap[_type]
+              if (extensions.indexOf(extension) > -1) {
+                type = _type
+              }
+            })
+            return type
+          },
           formatedAverageSpeed () {
             return `${Uploader.utils.formatSize(this.averageSpeed)} / s`
           },
