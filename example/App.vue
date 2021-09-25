@@ -1,11 +1,26 @@
 <template>
-  <uploader class="uploader-example">
+  <uploader class="uploader-example"  :options="options" :file-status-text="statusText">
   </uploader>
 </template>
 
 <script>
     export default {
-        name: ""
+        name: "",
+        data() {
+          return {
+            options: {
+              target: '/upload/uploadFile', // '//jsonplaceholder.typicode.com/posts/',
+              testChunks: false
+            },
+            statusText: {
+              success: '成功了',
+              error: '出错了',
+              uploading: '上传中',
+              paused: '暂停中',
+              waiting: '等待中'
+            }
+          }
+        }
     }
 </script>
 
