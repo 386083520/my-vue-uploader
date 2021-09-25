@@ -3,7 +3,7 @@
     <slot>
       <ul>
         <li v-for="file in fileList" :key="file.id">
-          <uploader-file></uploader-file>
+          <uploader-file :file="file" :list="true"></uploader-file>
         </li>
       </ul>
     </slot>
