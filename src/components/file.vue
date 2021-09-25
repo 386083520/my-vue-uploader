@@ -10,6 +10,8 @@
           <span v-show="status !== 'uploading'">{{statusText}}</span>
           <span v-show="status === 'uploading'">
              <span>{{progressStyle.progress}}</span>
+              <em>{{formatedAverageSpeed}}</em>
+              <i>{{formatedTimeRemaining}}</i>
           </span>
         </div>
         <div class="uploader-file-actions">
@@ -24,7 +26,9 @@
 </template>
 
 <script>
+    import Uploader from 'simple-uploader.js'
     import events from '../common/file-events'
+    import { secondsToStr } from '../common/utils'
     const COMPONENT_NAME = 'uploader-file'
     export default {
         name: COMPONENT_NAME,
@@ -48,6 +52,8 @@
             paused: false,
             error: false,
             progress: 0,
+            averageSpeed: 0,
+            timeRemaining: 0
           }
         },
         watch: {
@@ -63,6 +69,23 @@
           }
         },
         computed: {
+          formatedAverageSpeed () {
+            return `${Uploader.utils.formatSize(this.averageSpeed)} / s`
+          },
+          formatedTimeRemaining () {
+            const timeRemaining = this.timeRemaining
+            const file = this.file
+            if (timeRemaining === Number.POSITIVE_INFINITY || timeRemaining === 0) {
+              return ''
+            }
+            console.log('gsdtimeRemaining', timeRemaining)
+            let parsedTimeRemaining = secondsToStr(timeRemaining)
+            const parseTimeRemaining = file.uploader.opts.parseTimeRemaining
+            if (parseTimeRemaining) {
+              parsedTimeRemaining = parseTimeRemaining(timeRemaining, parsedTimeRemaining)
+            }
+            return parsedTimeRemaining
+          },
           status () {
             const isUploading = this.isUploading
             const isComplete = this.isComplete
@@ -173,6 +196,8 @@
           processResponse (message) {
           },
           _fileProgress () {
+            this.averageSpeed = this.file.averageSpeed
+            this.timeRemaining = this.file.timeRemaining()
             this.progress = this.file.progress()
           },
           _fileSuccess (rootFile, file, message) {
