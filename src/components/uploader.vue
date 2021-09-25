@@ -6,7 +6,7 @@
         <uploader-btn>选择文件</uploader-btn>
         <uploader-btn>选择文件夹</uploader-btn>
       </uploader-drop>
-      <uploader-list>list</uploader-list>
+      <uploader-list></uploader-list>
     </slot>
   </div>
 </template>
