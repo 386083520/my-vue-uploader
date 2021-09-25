@@ -10,6 +10,8 @@
 </template>
 
 <script>
+    import Uploader from 'simple-uploader.js'
+
     import UploaderBtn from './btn.vue'
     import UploaderDrop from './drop.vue'
     import UploaderUnsupport from './unsupport.vue'
@@ -20,6 +22,11 @@
     const COMPONENT_NAME = 'uploader'
     export default {
       name: COMPONENT_NAME,
+      provide () {
+        return {
+          uploader: this
+        }
+      },
       components: {
         UploaderBtn,
         UploaderDrop,
@@ -27,6 +34,10 @@
         UploaderList,
         UploaderFiles,
         UploaderFile
+      },
+      created () {
+        const uploader = new Uploader(this.options)
+        this.uploader = uploader
       }
     }
 </script>
